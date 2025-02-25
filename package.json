@@ -1,0 +1,12 @@
+{
+  "name": "valannia-inventory-tracker",
+  "version": "1.0.0",
+  "description": "A simple SPL token tracker for the Web3 game Valannia.",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
