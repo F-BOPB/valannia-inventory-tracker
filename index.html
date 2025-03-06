@@ -1,1 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
 
+
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Valannia Inventory Tracker</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <script src="sorting.js" defer></script>
+
+
+        <style>
+            #walletControls {
+                display: flex;
+                justify-content: flex-end; /* Aligns button to the right */
+                margin-bottom: 10px;
+            }
+            #refreshButton {
+                padding: 5px 10px;
+                background-color: #4CAF50;
+                color: white;
+                border: none;
+                cursor: pointer;
+                border-radius: 5px;
+                font-weight: bold;
+            }
+            #refreshButton:hover {
+                background-color: #45a049;
+            }
+            
+            /* Add Spinning Animation */
+            @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+            }
+
+            .spin {
+                display: inline-block;
+                animation: spin 1s linear infinite;
+            }
+
+            /* Add ... Animation */
+            @keyframes loadingDots {
+            0% { content: "."; }
+            33% { content: ".."; }
+            66% { content: "..."; }
+            100% { content: "."; }
+             }
+
+             .dots::after {
+            content: ".";
+            animation: loadingDots 1.5s infinite;
+             }
+
+        </style>
+        
+    
+    </head>
+
+<body class="bg-gray-900 text-white font-sans">
+    <div class="container mx-auto p-6">
+        <h1 class="text-3xl font-bold text-center mb-6">Valannia Inventory Tracker</h1>
+
+         <!-- ✅ Wallet Input Section -->
+         <div class="mb-4">
+            <input id="walletInput" type="text" placeholder="Enter wallet address"
+                class="p-2 rounded bg-gray-800 text-white w-64">
+            <button id="addWalletBtn" onclick="addWallet()" class="bg-blue-500 p-2 rounded text-white">Add Wallet</button>
+            <span class="text-gray-400 text-sm ml-2">up to 10 wallets</span>
+        </div>
+
+
+        <!-- Wallet List -->
+        <div id="walletList" class="mb-6 p-4 bg-gray-800 rounded-lg">
+            <h2 class="text-xl font-semibold">Tracked Wallets</h2>
+            <ul id="wallets" class="mt-2 space-y-2"></ul>
+        </div>
+
+        <!-- Inventory Table -->
+        <div class="overflow-x-auto">
+            <div id="walletControls" class="flex justify-between items-center mb-4 w-full">
+                <!-- Loading message aligned to the left -->
+                <span id="loadingMessage" class="text-gray-400 hidden w-full text-left">Fetching wallet data<span class="dots"></span></span>
+
+                <!-- Refresh button aligned to the right -->
+                <button id="refreshButton" class="bg-green-500 text-white p-2 rounded flex items-center space-x-2 whitespace-nowrap">
+                    <span id="refreshIcon">🔄</span>
+                    <span>Refresh Balances</span>
+                </button>
+            </div>
+            <table class="w-full text-left border-collapse">
+                <tbody id="inventoryTable" class="bg-gray-800 divide-y divide-gray-700">
+                    <!-- Dynamic Content Here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
