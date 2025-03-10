@@ -317,17 +317,17 @@ async function displayFilteredTokenBalances(filteredBalances) {
 
     // Create the header row with wallet addresses as columns
     let headerRow = document.createElement("tr");
-    headerRow.className = "border-b border-gray-700"; // Styling for header row
+    headerRow.className = "bg-[#141d2f] border-b border-gray-700"; // Styling for header row
 
     // Create a placeholder column for token names
     let nameHeaderCell = document.createElement("th");
-    nameHeaderCell.className = "p-3 text-center";
+    nameHeaderCell.className = "p-2 text-center";
     nameHeaderCell.textContent = "Items"; // Column for token names
     headerRow.appendChild(nameHeaderCell);
 
     // Create the "Total" header column
     let totalHeaderCell = document.createElement("th");
-    totalHeaderCell.className = "p-3 text-center";
+    totalHeaderCell.className = "p-2 text-center";
     totalHeaderCell.textContent = "Total"; // Column for total quantity
     headerRow.appendChild(totalHeaderCell);
 
@@ -335,7 +335,7 @@ async function displayFilteredTokenBalances(filteredBalances) {
     for (const wallet of wallets) {
         let shortenedWalletAddress = shortenAddress(wallet);  // Shorten the wallet address
         let walletHeaderCell = document.createElement("th");
-        walletHeaderCell.className = "p-3 text-center";
+        walletHeaderCell.className = "p-2 text-center";
         walletHeaderCell.textContent = shortenedWalletAddress; // Set shortened address in header
         headerRow.appendChild(walletHeaderCell);
     }
@@ -351,20 +351,18 @@ async function displayFilteredTokenBalances(filteredBalances) {
     });
     }
 
-
-
     // ✅ Create the SOL balance row at the top
     let solRow = document.createElement("tr");
-    solRow.className = "border-b border-gray-700";
+    solRow.className = "bg-gray-800 border-b border-gray-700";
     
     let solLabelCell = document.createElement("td");
-    solLabelCell.className = "p-3 text-center";
+    solLabelCell.className = "p-1 text-center";
     solLabelCell.textContent = "SOL Balance"; // Label for the SOL row
     solRow.appendChild(solLabelCell);
 
     // Add "SOL" for each wallet column in the header
     let totalSolCell = document.createElement("td");
-    totalSolCell.className = "p-3 text-center";
+    totalSolCell.className = "p-1 text-center";
     totalSolCell.textContent = ""; // Empty space for Total column in SOL row
     solRow.appendChild(totalSolCell);
 
@@ -372,7 +370,7 @@ async function displayFilteredTokenBalances(filteredBalances) {
     for (const wallet of wallets) {
         let solBalance = await getSolBalance(wallet); // Fetch the SOL balance (assuming async function)
         let solBalanceCell = document.createElement("td");
-        solBalanceCell.className = "p-3 text-center";
+        solBalanceCell.className = "p-1 text-center";
         solBalanceCell.textContent = solBalance.toLocaleString(); // Display SOL balance
         solRow.appendChild(solBalanceCell);
     }
@@ -395,11 +393,11 @@ async function displayFilteredTokenBalances(filteredBalances) {
 
         // ✅ Create the row for each token
         let row = document.createElement("tr");
-        row.className = "border-b border-gray-700";
+        row.className = "bg-gray-800 border-b border-gray-700";
 
         // ✅ Create the first column: Token Name (with Solscan link and icon)
         let nameCell = document.createElement("td");
-        nameCell.className = "p-3 flex items-center gap-2";
+        nameCell.className = "p-1 flex items-center gap-2";
 
         let icon = document.createElement("img"); // Token icon
         icon.src = tokenData.icon;
@@ -418,7 +416,7 @@ async function displayFilteredTokenBalances(filteredBalances) {
 
         // ✅ Create the second column: Total Quantity
         let totalCell = document.createElement("td");
-        totalCell.className = "p-3 text-center";
+        totalCell.className = "p-1 text-center";
         totalCell.textContent = totalQuantity.toLocaleString(); // Format for readability
         row.appendChild(totalCell);
 
@@ -426,12 +424,26 @@ async function displayFilteredTokenBalances(filteredBalances) {
         // Loop over wallets and display the token balances
         for (const wallet of wallets) {
             let walletCell = document.createElement("td");
-            walletCell.className = "p-3 text-center";
-            // Check if the wallet has a balance for this token, else show 0 or "No balance"
-            let walletBalance = tokenData.balances[wallet] || 0; // Default to 0 if not found
-            walletCell.textContent = walletBalance.toLocaleString(); // Format for readability
+            walletCell.className = "p-1 text-center";
+            
+            // Get the raw balance (do not default to 0 immediately)
+            let balance = tokenData.balances[wallet];
+            
+            if (typeof balance === "undefined") {
+                // Token account does not exist for this wallet:
+                walletCell.textContent = "0";
+                // Because your page uses Tailwind’s text-white (from body), we need to override it:
+                walletCell.style.cssText = "color: black !important;";
+            } else {
+                // Token account exists (even if balance is 0):
+                walletCell.textContent = balance.toLocaleString();
+                // Optionally, you can force it to use the normal text color (if needed):
+                // walletCell.style.cssText = "color: white !important;";
+            }
+            
             row.appendChild(walletCell);
         }
+
 
         // Append the row to the table
         inventoryTable.appendChild(row);

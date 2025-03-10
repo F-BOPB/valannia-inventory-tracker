@@ -12,6 +12,11 @@
 
 
         <style>
+        table,
+        tr {
+            height: 6px;
+        }
+
             #walletControls {
                 display: flex;
                 justify-content: flex-end; /* Aligns button to the right */
@@ -20,7 +25,7 @@
             #refreshButton {
                 padding: 5px 10px;
                 background-color: #4CAF50;
-                color: white;
+                color: rgb(238, 238, 238);
                 border: none;
                 cursor: pointer;
                 border-radius: 5px;
@@ -59,7 +64,7 @@
     
     </head>
 
-<body class="bg-gray-900 text-white font-sans">
+<body class="bg-[#11141a] text-white font-sans">
     <div class="container mx-auto p-6">
         <h1 class="text-3xl font-bold text-center mb-6">Valannia Inventory Tracker</h1>
 
@@ -91,7 +96,7 @@
                 </button>
             </div>
             <table class="w-full text-left border-collapse">
-                <tbody id="inventoryTable" class="bg-gray-800 divide-y divide-gray-700">
+                <tbody id="inventoryTable" class="divide-y divide-gray-600">
                     <!-- Dynamic Content Here -->
                 </tbody>
             </table>
