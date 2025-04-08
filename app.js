@@ -12,10 +12,45 @@ async function loadValanniaTokens() {
     }
 }
 
+// Populate Filter Dropdowns Dynamically
+function populateDropdownFilters() {
+    const categories = new Set();
+    const tiers = new Set();
+    const professions = new Set();
+
+    for (const token of valanniaTokens) {
+        if (token.category) categories.add(token.category.trim());
+        if (token.tier) tiers.add(token.tier.trim());
+        if (token.profession) professions.add(token.profession.trim());
+    }
+
+    // Helper to populate a select element
+    function fillDropdown(selectId, values) {
+        const select = document.getElementById(selectId);
+        if (!select) return;
+
+        // Remove any previous options except the first (e.g., "All Categories")
+        select.innerHTML = select.innerHTML.split('</option>')[0] + '</option>';
+
+        [...values].sort().forEach(value => {
+            const option = document.createElement("option");
+            option.value = value;
+            option.textContent = value;
+            select.appendChild(option);
+        });
+    }
+
+    fillDropdown("categoryFilter", categories);
+    fillDropdown("tierFilter", tiers);
+    fillDropdown("professionFilter", professions);
+}
+
+
 // Run this function when the page loads
 window.onload = async function () {
     console.log("🚀 Valannia Inventory Tracker Loaded!");
     await loadValanniaTokens(); 
+    populateDropdownFilters();
     loadWallets();
     await fetchAllSolBalances(); 
     // ✅ Fetch SPL balances and display them immediately
@@ -125,6 +160,8 @@ function filterValanniaTokens(allBalances) {
                 name: tokenData.name,
                 icon: tokenData.icon,
                 category: tokenData.category,
+                tier: tokenData.tier,
+                profession: tokenData.profession,
                 balances: allBalances[mintAddress].balances
             };
         }
@@ -393,6 +430,10 @@ async function displayFilteredTokenBalances(filteredBalances) {
 
         // ✅ Create the row for each token
         let row = document.createElement("tr");
+        row.dataset.category = tokenData.category || "";
+        row.dataset.tier = tokenData.tier || "";
+        row.dataset.profession = tokenData.profession || "";
+
         row.className = "bg-gray-800 border-b border-gray-700";
 
         // ✅ Create the first column: Token Name (with Solscan link and icon)
@@ -453,6 +494,60 @@ async function displayFilteredTokenBalances(filteredBalances) {
     setupSorting();
 
 }
+
+// Searching Function
+function filterTable() {
+    const searchValue = document.getElementById("searchInput").value.toLowerCase();
+    const categoryFilter = document.getElementById("categoryFilter").value;
+    const tierFilter = document.getElementById("tierFilter").value;
+    const professionFilter = document.getElementById("professionFilter").value;
+
+    const tableBody = document.getElementById("inventoryTable");
+    if (!tableBody) return;
+
+    const rows = Array.from(tableBody.querySelectorAll("tr"));
+
+    for (let row of rows) {
+        const firstCell = row.querySelector("td");
+        if (!firstCell) continue;
+
+        const text = firstCell.textContent.toLowerCase();
+
+        // Always show the header and SOL Balance row
+        if (firstCell.textContent.trim().toLowerCase() === "sol balance" || row.querySelector("th")) {
+            row.style.display = "";
+            continue;
+        }
+
+        const rowData = row.dataset; // Access metadata from data attributes
+
+        const matchesSearch = text.includes(searchValue);
+        const matchesCategory = !categoryFilter || rowData.category === categoryFilter;
+        const matchesTier = !tierFilter || rowData.tier === tierFilter;
+        const matchesProfession = !professionFilter || rowData.profession === professionFilter;
+
+        if (matchesSearch && matchesCategory && matchesTier && matchesProfession) {
+            row.style.display = "";
+        } else {
+            row.style.display = "none";
+        }
+    }
+}
+
+function clearSearch() {
+    const input = document.getElementById("searchInput");
+    input.value = "";
+    filterTable(); // Refresh table to show all rows
+    toggleClearButton(); // Hide ❌
+}
+
+function toggleClearButton() {
+    const input = document.getElementById("searchInput");
+    const button = document.getElementById("clearSearchBtn");
+    button.classList.toggle("hidden", input.value.trim() === "");
+}
+
+
 
 
 // ===========================
