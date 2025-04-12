@@ -111,46 +111,53 @@
             <option value="">All Professions</option>
             </select>
         </div>
+
+        <!-- Favorites Only Toggle -->
+        <div class="mt-2 flex items-center space-x-2 whitespace-nowrap">
+            <input type="checkbox" id="favoritesOnly" onchange="filterTable()" class="accent-yellow-400">
+            <label for="favoritesOnly" class="text-sm text-gray-300">Show ⭐ Only</label>
+        </div>
+
+        <!-- Loading Message (right-aligned on the same row) -->
+        <span id="loadingMessage" class="ml-auto text-red-400 hidden">Fetching wallet data<span class="dots"></span></span>
         </div>
 
         
-    <!-- Loading Message (right-aligned) -->
-    <span id="loadingMessage" class="text-gray-400 hidden">Fetching wallet data<span class="dots"></span></span>
     </div>
 
-
-
+   
     <!-- Search and Refresh Row -->
     <div class="flex justify-between items-center mb-4">
         <!-- Search Bar (left) -->
         <div class="relative w-full max-w-md">
-        <input id="searchInput" type="text" placeholder="Search items..."
-            class="p-2 rounded w-full bg-gray-800 text-white pr-10"
-            oninput="filterTable(); toggleClearButton()">
-        <button id="clearSearchBtn"
-            onclick="clearSearch()"
-            class="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white text-sm hidden">
-            ❌
+            <input id="searchInput" type="text" placeholder="Search items..."
+                class="p-2 rounded w-full bg-gray-800 text-white pr-10"
+                oninput="filterTable(); toggleClearButton()">
+            <button id="clearSearchBtn"
+                onclick="clearSearch()"
+                class="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white text-sm hidden">
+                ❌
+            </button>
+        </div>
+
+        <!-- Refresh Button (right) -->
+        <button id="refreshButton"
+            class="ml-4 bg-green-500 text-white p-2 rounded flex items-center space-x-2 whitespace-nowrap">
+            <span id="refreshIcon">🔄</span>
+            <span>Refresh Balances</span>
         </button>
         </div>
 
-    <!-- Refresh Button (right) -->
-    <button id="refreshButton"
-        class="ml-4 bg-green-500 text-white p-2 rounded flex items-center space-x-2 whitespace-nowrap">
-        <span id="refreshIcon">🔄</span>
-        <span>Refresh Balances</span>
-    </button>
-    </div>
-        
+    
 
-        <!-- Inventory Table -->
-        <div class="overflow-x-auto">
-            <table class="w-full text-left border-collapse">
-                <tbody id="inventoryTable" class="divide-y divide-gray-600">
-                    <!-- Dynamic Content Here -->
-                </tbody>
-            </table>
-        </div>
+    <!-- Inventory Table -->
+    <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+            <tbody id="inventoryTable" class="divide-y divide-gray-600">
+                <!-- Dynamic Content Here -->
+            </tbody>
+        </table>
+    </div>
 
 
     <script src="app.js"></script>
