@@ -86,6 +86,10 @@ function toggleFavorite(mintAddress) {
         const starBtn = row.querySelector("button");
         if (starBtn) {
             starBtn.textContent = isNowFavorite ? "★" : "☆";
+            starBtn.classList.remove("text-yellow-400", "text-gray-500");
+            starBtn.classList.add(isNowFavorite ? "text-yellow-400" : "text-gray-500");
+
+
         }
 
         row.dataset.favorite = isNowFavorite ? "true" : "false";
@@ -491,7 +495,8 @@ async function displayFilteredTokenBalances(filteredBalances) {
         // Favorite star button
         let starBtn = document.createElement("button");
         starBtn.textContent = isFavorite ? "★" : "☆";
-        starBtn.className = "text-yellow-400 text-lg";
+        starBtn.className = `${isFavorite ? "text-yellow-400" : "text-gray-500"} text-lg hover:scale-110 transition`;
+
         starBtn.onclick = () => toggleFavorite(mintAddress);
 
         let link = document.createElement("a");
