@@ -112,11 +112,16 @@
             </select>
         </div>
 
-        <!-- Favorites Only Toggle -->
-        <div class="mt-2 flex items-center space-x-2 whitespace-nowrap">
-            <input type="checkbox" id="favoritesOnly" onchange="filterTable()" class="accent-yellow-400">
-            <label for="favoritesOnly" class="text-sm text-gray-300">Show ⭐ Only</label>
-        </div>
+        <!-- Favorites Only Toggle (matches dropdown layout) -->
+        <div>
+            <label class="text-gray-300 text-sm mb-1 block" for="favoritesOnly">Favorite</label>
+            <div class="flex items-center space-x-2 h-[38px]">
+              <input type="checkbox" id="favoritesOnly" onchange="filterTable()" class="accent-yellow-400">
+              <label for="favoritesOnly" class="text-sm text-gray-300 leading-tight">Show ⭐ Only</label>
+            </div>
+          </div>
+          
+  
 
         <!-- Loading Message (right-aligned on the same row) -->
         <span id="loadingMessage" class="ml-auto text-red-400 hidden">Fetching wallet data<span class="dots"></span></span>
