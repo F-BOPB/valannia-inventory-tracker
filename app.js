@@ -59,6 +59,45 @@ window.onload = async function () {
     displayFilteredTokenBalances(filteredBalances);
 };
 
+//////////////////////////////// Favorit Toggle and storage  ///////////////////////
+function getFavoriteTokens() {
+    return JSON.parse(localStorage.getItem("favoriteTokens") || "[]");
+}
+
+function toggleFavorite(mintAddress) {
+    let favorites = getFavoriteTokens();
+    const index = favorites.indexOf(mintAddress);
+    const isNowFavorite = index === -1;
+
+    // Update the favoriteTokens list
+    if (isNowFavorite) {
+        favorites.push(mintAddress);
+    } else {
+        favorites.splice(index, 1);
+    }
+    localStorage.setItem("favoriteTokens", JSON.stringify(favorites));
+
+    // Update the button icon without reloading the table
+    const allRows = document.querySelectorAll(`#inventoryTable tr`);
+    for (let row of allRows) {
+        const link = row.querySelector(`a[href*="${mintAddress}"]`);
+        if (!link) continue;
+
+        const starBtn = row.querySelector("button");
+        if (starBtn) {
+            starBtn.textContent = isNowFavorite ? "★" : "☆";
+        }
+
+        row.dataset.favorite = isNowFavorite ? "true" : "false";
+    }
+
+    // If the user is filtering by favorites, we must re-filter the table
+    const favoritesOnly = document.getElementById("favoritesOnly");
+    if (favoritesOnly && favoritesOnly.checked) {
+        filterTable();
+    }
+}
+
 //////////////////////////////// FETCHING BALANCE ///////////////////////
 // ✅ Fetch SOL Balances for a Specific Wallet
 async function getSolBalance(walletAddress) {
@@ -429,10 +468,14 @@ async function displayFilteredTokenBalances(filteredBalances) {
         }
 
         // ✅ Create the row for each token
+        const favoriteTokens = getFavoriteTokens(); // Add this near the top of the function
+        const isFavorite = favoriteTokens.includes(mintAddress); // Check if this token is a favorite
+
         let row = document.createElement("tr");
         row.dataset.category = tokenData.category || "";
         row.dataset.tier = tokenData.tier || "";
         row.dataset.profession = tokenData.profession || "";
+        row.dataset.favorite = isFavorite ? "true" : "false";
 
         row.className = "bg-gray-800 border-b border-gray-700";
 
@@ -445,14 +488,22 @@ async function displayFilteredTokenBalances(filteredBalances) {
         icon.alt = tokenData.name;
         icon.className = "w-6 h-6 rounded";
 
-        let link = document.createElement("a"); // Solscan link
+        // Favorite star button
+        let starBtn = document.createElement("button");
+        starBtn.textContent = isFavorite ? "★" : "☆";
+        starBtn.className = "text-yellow-400 text-lg";
+        starBtn.onclick = () => toggleFavorite(mintAddress);
+
+        let link = document.createElement("a");
         link.href = `https://solscan.io/token/${mintAddress}`;
         link.target = "_blank";
         link.className = "text-blue-400 hover:underline";
         link.textContent = tokenData.name;
 
+        nameCell.appendChild(starBtn);
         nameCell.appendChild(icon);
         nameCell.appendChild(link);
+
         row.appendChild(nameCell);
 
         // ✅ Create the second column: Total Quantity
@@ -501,6 +552,8 @@ function filterTable() {
     const categoryFilter = document.getElementById("categoryFilter").value;
     const tierFilter = document.getElementById("tierFilter").value;
     const professionFilter = document.getElementById("professionFilter").value;
+    const favoritesOnly = document.getElementById("favoritesOnly").checked;
+
 
     const tableBody = document.getElementById("inventoryTable");
     if (!tableBody) return;
@@ -525,12 +578,15 @@ function filterTable() {
         const matchesCategory = !categoryFilter || rowData.category === categoryFilter;
         const matchesTier = !tierFilter || rowData.tier === tierFilter;
         const matchesProfession = !professionFilter || rowData.profession === professionFilter;
+        const matchesFavorite = !favoritesOnly || rowData.favorite === "true";
 
-        if (matchesSearch && matchesCategory && matchesTier && matchesProfession) {
+
+        if (matchesSearch && matchesCategory && matchesTier && matchesProfession && matchesFavorite) {
             row.style.display = "";
         } else {
             row.style.display = "none";
         }
+        
     }
 }
 
