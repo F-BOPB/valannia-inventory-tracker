@@ -9,6 +9,7 @@
         <link rel="shortcut icon" href="favicon.ico"> 
         <script src="https://cdn.tailwindcss.com"></script>
         <script src="sorting.js" defer></script>
+        <script src="data/tyxenMachineRecipes.js" defer></script>
 
 
         <style>
@@ -109,6 +110,14 @@
             <label for="professionFilter" class="block mb-1 text-gray-300">Profession</label>
             <select id="professionFilter" class="p-2 rounded bg-gray-800 text-white" onchange="filterTable()">
             <option value="">All Professions</option>
+            </select>
+        </div>
+
+        <!-- Recipe Filter -->
+        <div>
+            <label for="recipeFilter" class="block mb-1 text-gray-300">Tyxen Machine</label>
+            <select id="recipeFilter" class="p-2 rounded bg-gray-800 text-white" onchange="filterTable()">
+            <option value="">...</option>
             </select>
         </div>
 

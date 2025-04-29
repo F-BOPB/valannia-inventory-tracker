@@ -43,20 +43,127 @@ function populateDropdownFilters() {
     fillDropdown("categoryFilter", categories);
     fillDropdown("tierFilter", tiers);
     fillDropdown("professionFilter", professions);
+
+        // Populate Recipe Filter
+        const recipeSelect = document.getElementById("recipeFilter");
+        if (recipeSelect && typeof tyxenMachineRecipes !== "undefined") {
+            // Remove any previous options except the first ("All Recipes")
+            recipeSelect.innerHTML = recipeSelect.innerHTML.split('</option>')[0] + '</option>';
+    
+            for (const recipe of tyxenMachineRecipes) {
+                const option = document.createElement("option");
+                option.value = recipe.name;
+                option.textContent = recipe.name;
+                recipeSelect.appendChild(option);
+            }
+        }
+    
 }
 
+
+function setupFilterPersistence() {
+    const categoryFilter = document.getElementById("categoryFilter");
+    const tierFilter = document.getElementById("tierFilter");
+    const professionFilter = document.getElementById("professionFilter");
+    const recipeFilter = document.getElementById("recipeFilter");
+    const favoritesOnlyCheckbox = document.getElementById("favoritesOnly");
+
+    if (categoryFilter) {
+        categoryFilter.addEventListener("change", () => {
+            localStorage.setItem("selectedCategory", categoryFilter.value);
+            filterTable(); // ✅ Just re-filter
+        });
+    }
+
+    if (tierFilter) {
+        tierFilter.addEventListener("change", () => {
+            localStorage.setItem("selectedTier", tierFilter.value);
+            filterTable(); // ✅ Just re-filter
+        });
+    }
+
+    if (professionFilter) {
+        professionFilter.addEventListener("change", () => {
+            localStorage.setItem("selectedProfession", professionFilter.value);
+            filterTable(); // ✅ Just re-filter
+        });
+    }
+
+    if (favoritesOnlyCheckbox) {
+        favoritesOnlyCheckbox.addEventListener("change", () => {
+            localStorage.setItem("favoritesOnly", favoritesOnlyCheckbox.checked ? "true" : "false");
+            filterTable(); // ✅ Just re-filter
+        });
+    }
+
+    if (recipeFilter) {
+        recipeFilter.addEventListener("change", () => {
+            localStorage.setItem("selectedRecipe", recipeFilter.value);
+            filterTable(); // ✅ Recipe still needs a refresh for now
+        });
+    }
+}
+
+
+function applySavedFilters() {
+    const savedCategory = localStorage.getItem("selectedCategory");
+    const savedTier = localStorage.getItem("selectedTier");
+    const savedProfession = localStorage.getItem("selectedProfession");
+    const savedRecipe = localStorage.getItem("selectedRecipe");
+    const savedFavoritesOnly = localStorage.getItem("favoritesOnly");
+
+    if (savedCategory) {
+        const categoryFilter = document.getElementById("categoryFilter");
+        if (categoryFilter) categoryFilter.value = savedCategory;
+    }
+
+    if (savedTier) {
+        const tierFilter = document.getElementById("tierFilter");
+        if (tierFilter) tierFilter.value = savedTier;
+    }
+
+    if (savedProfession) {
+        const professionFilter = document.getElementById("professionFilter");
+        if (professionFilter) professionFilter.value = savedProfession;
+    }
+
+    if (savedRecipe) {
+        const recipeFilter = document.getElementById("recipeFilter");
+        if (recipeFilter) recipeFilter.value = savedRecipe;
+    }
+
+    if (savedFavoritesOnly) {
+        const favoritesOnlyCheckbox = document.getElementById("favoritesOnly");
+        if (favoritesOnlyCheckbox) favoritesOnlyCheckbox.checked = savedFavoritesOnly === "true";
+    }
+}
+
+async function refreshInventory() {
+    const solBalances = await fetchAllSolBalances();
+    const splBalances = await fetchAllSplBalances();
+    const filteredBalances = filterValanniaTokens(splBalances);
+
+    displayFilteredTokenBalances(filteredBalances); // Build full table
+    filterTable(); // After building, immediately apply user filters (saved from localStorage)
+}
 
 // Run this function when the page loads
 window.onload = async function () {
     console.log("🚀 Valannia Inventory Tracker Loaded!");
-    await loadValanniaTokens(); 
+    await loadValanniaTokens();
     populateDropdownFilters();
+    applySavedFilters();
+    setupFilterPersistence();
     loadWallets();
-    await fetchAllSolBalances(); 
-    // ✅ Fetch SPL balances and display them immediately
-    const solBalances = await fetchAllSolBalances(); // Fetch and display SOL balances  
-    const filteredBalances = await fetchAllSplBalances(); // Fetch and display SPL balances  
-    displayFilteredTokenBalances(filteredBalances);
+    await fetchAllSolBalances();
+
+    // 🚨 Always fetch the FULL SPL balances
+    const splBalances = await fetchAllSplBalances(); // Do not apply localStorage filter yet
+
+    const filteredBalances = filterValanniaTokens(splBalances); // Only remove non-Valannia tokens
+    displayFilteredTokenBalances(filteredBalances); // 🚨 Build the full table first
+
+    filterTable(); // 🚨 After full table is built, apply user-selected filters (hide/show rows)
 };
 
 //////////////////////////////// Favorit Toggle and storage  ///////////////////////
@@ -195,7 +302,7 @@ function filterValanniaTokens(allBalances) {
             // Ensure that the balances for each wallet exist, even if 0
             let walletBalances = {};
             for (const wallet of trackedWallets) {
-            walletBalances[wallet] = allBalances[mintAddress].balances[wallet] || 0; // Default to 0 if undefined
+                walletBalances[wallet] = allBalances[mintAddress].balances[wallet];
             }
             
             // ✅ Include only Valannia tokens and attach metadata
@@ -206,6 +313,27 @@ function filterValanniaTokens(allBalances) {
                 tier: tokenData.tier,
                 profession: tokenData.profession,
                 balances: allBalances[mintAddress].balances
+            };
+        }
+    }
+    
+    // Ensure ALL tokens from valanniaTokens.json are present in the filtered result
+    for (const token of valanniaTokens) {
+        const mint = token.mint;
+        if (!filtered[mint]) {
+            const zeroBalances = {};
+            for (const wallet of trackedWallets) {
+                zeroBalances[wallet] = { balance: 0, accountExists: false };
+
+            }
+
+            filtered[mint] = {
+                name: token.name,
+                icon: token.icon,
+                category: token.category,
+                tier: token.tier,
+                profession: token.profession,
+                balances: zeroBalances
             };
         }
     }
@@ -232,8 +360,10 @@ async function fetchAllSplBalances() {
     // ✅ Ensure every token has an entry for all wallets, even if they hold 0
     for (const mintAddress in allBalances) {
         for (const wallet of trackedWallets) {
-            if (!allBalances[mintAddress].balances[wallet]) {
-                allBalances[mintAddress].balances[wallet] = 0;
+            if (allBalances[mintAddress].balances[wallet] === undefined) {
+                allBalances[mintAddress].balances[wallet] = { balance: 0, accountExists: false };
+            } else {
+                allBalances[mintAddress].balances[wallet] = { balance: allBalances[mintAddress].balances[wallet], accountExists: true };
             }
         }
     }
@@ -368,6 +498,8 @@ function shortenAddress(address) {
 // Table
 async function displayFilteredTokenBalances(filteredBalances) {
     let inventoryTable = document.getElementById("inventoryTable"); // ✅ Get the table body
+    const favoriteTokens = getFavoriteTokens();
+
     inventoryTable.innerHTML = ""; // ✅ Clear clears any existing rows in the table before adding new ones.
 
     // Check if filteredBalances is empty or undefined
@@ -458,23 +590,41 @@ async function displayFilteredTokenBalances(filteredBalances) {
     // Append the SOL balance row to the table
     inventoryTable.appendChild(solRow);
 
+    // ✅ Read saved filters from LocalStorage
+    const savedCategory = localStorage.getItem("selectedCategory");
+    const savedTier = localStorage.getItem("selectedTier");
+    const savedProfession = localStorage.getItem("selectedProfession");
+    const savedRecipe = localStorage.getItem("selectedRecipe");
+    const savedFavoritesOnly = localStorage.getItem("favoritesOnly") === "true";
+
+    let allowedMintsForRecipe = [];
+    if (savedRecipe && typeof tyxenMachineRecipes !== "undefined") {
+        const activeRecipe = tyxenMachineRecipes.find(r => r.name === savedRecipe);
+        if (activeRecipe) {
+            allowedMintsForRecipe = [
+                activeRecipe.result.mint,
+                ...activeRecipe.ingredients.map(ingredient => ingredient.mint)
+            ];
+        }
+    }
 
     // Loop through each token in the filtered balances
     for (const mintAddress in filteredBalances) {
         let tokenData = filteredBalances[mintAddress]; // ✅ Get token data
+        const isFavorite = favoriteTokens.includes(mintAddress);
+
 
         // ✅ Calculate total quantity across all wallets
-        let totalQuantity = Object.values(tokenData.balances).reduce((sum, balance) => sum + balance, 0);
-
-        // ✅ Only proceed if totalQuantity is greater than 0
-        if (totalQuantity <= 0) {
-            continue; // Skip this token if the total balance is 0
-        }
+        let totalQuantity = Object.values(tokenData.balances).reduce((sum, balance) => {
+            if (typeof balance === "object" && balance !== null) {
+                return sum + (balance.balance || 0);
+            } else {
+                return sum + (balance || 0);
+            }
+        }, 0);
+        
 
         // ✅ Create the row for each token
-        const favoriteTokens = getFavoriteTokens(); // Add this near the top of the function
-        const isFavorite = favoriteTokens.includes(mintAddress); // Check if this token is a favorite
-
         let row = document.createElement("tr");
         row.dataset.category = tokenData.category || "";
         row.dataset.tier = tokenData.tier || "";
@@ -516,31 +666,22 @@ async function displayFilteredTokenBalances(filteredBalances) {
         totalCell.className = "p-1 text-center";
         totalCell.textContent = totalQuantity.toLocaleString(); // Format for readability
         row.appendChild(totalCell);
-
-        // ✅ Create wallet balance columns dynamically for each wallet
-        // Loop over wallets and display the token balances
+            
+           // ✅ Create wallet balance columns dynamically for each wallet
         for (const wallet of wallets) {
             let walletCell = document.createElement("td");
             walletCell.className = "p-1 text-center";
-            
-            // Get the raw balance (do not default to 0 immediately)
-            let balance = tokenData.balances[wallet];
-            
-            if (typeof balance === "undefined") {
-                // Token account does not exist for this wallet:
-                walletCell.textContent = "0";
-                // Because your page uses Tailwind’s text-white (from body), we need to override it:
-                walletCell.style.cssText = "color: black !important;";
+
+            let balanceInfo = tokenData.balances[wallet];
+
+            if (!balanceInfo.accountExists) {
+                walletCell.textContent = "-";
             } else {
-                // Token account exists (even if balance is 0):
-                walletCell.textContent = balance.toLocaleString();
-                // Optionally, you can force it to use the normal text color (if needed):
-                // walletCell.style.cssText = "color: white !important;";
+                walletCell.textContent = balanceInfo.balance.toLocaleString();
             }
-            
+
             row.appendChild(walletCell);
         }
-
 
         // Append the row to the table
         inventoryTable.appendChild(row);
@@ -548,7 +689,7 @@ async function displayFilteredTokenBalances(filteredBalances) {
 
     // Reinitialize header sorting event listeners
     setupSorting();
-
+    filterTable()
 }
 
 // Searching Function
@@ -558,6 +699,7 @@ function filterTable() {
     const tierFilter = document.getElementById("tierFilter").value;
     const professionFilter = document.getElementById("professionFilter").value;
     const favoritesOnly = document.getElementById("favoritesOnly").checked;
+    const recipeFilter = document.getElementById("recipeFilter").value;
 
 
     const tableBody = document.getElementById("inventoryTable");
@@ -579,18 +721,47 @@ function filterTable() {
 
         const rowData = row.dataset; // Access metadata from data attributes
 
+        // If a recipe is selected, check if the token matches the recipe result or ingredients
+        let matchesRecipe = true;
+        if (recipeFilter) {
+            const activeRecipe = tyxenMachineRecipes.find(r => r.name === recipeFilter);
+            if (activeRecipe) {
+                const tokenLink = row.querySelector("a[href*='solscan.io/token/']");
+                if (tokenLink) {
+                    const href = tokenLink.getAttribute("href");
+                    const mintMatch = href.match(/token\/([^\/\?]+)/);
+                    const mintAddress = mintMatch ? mintMatch[1] : "";
+
+                    const validMints = [
+                        activeRecipe.result.mint,
+                        ...activeRecipe.ingredients.map(ingredient => ingredient.mint)
+                    ];
+
+                    matchesRecipe = validMints.includes(mintAddress);
+                } else {
+                    matchesRecipe = false; // If no link (weird row), hide
+                }
+            }
+        }
+
         const matchesSearch = text.includes(searchValue);
         const matchesCategory = !categoryFilter || rowData.category === categoryFilter;
         const matchesTier = !tierFilter || rowData.tier === tierFilter;
         const matchesProfession = !professionFilter || rowData.profession === professionFilter;
         const matchesFavorite = !favoritesOnly || rowData.favorite === "true";
+        const totalCell = row.querySelector("td:nth-child(2)");
+        const total = totalCell ? parseFloat(totalCell.textContent.replace(/,/g, "")) : 0;
+        
+        const hideZeroBalance = !recipeFilter && total === 0;
+        
 
-
-        if (matchesSearch && matchesCategory && matchesTier && matchesProfession && matchesFavorite) {
+        if (matchesSearch && matchesCategory && matchesTier && matchesProfession && matchesFavorite && matchesRecipe && !hideZeroBalance) {
             row.style.display = "";
         } else {
             row.style.display = "none";
         }
+        
+        
         
     }
 }
@@ -607,8 +778,6 @@ function toggleClearButton() {
     const button = document.getElementById("clearSearchBtn");
     button.classList.toggle("hidden", input.value.trim() === "");
 }
-
-
 
 
 // ===========================
@@ -699,3 +868,6 @@ document.addEventListener("DOMContentLoaded", () => {
         refreshButton.addEventListener("click", refreshBalances);
     }
 });
+
+
+
