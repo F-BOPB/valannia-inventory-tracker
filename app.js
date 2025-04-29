@@ -151,6 +151,7 @@ async function refreshInventory() {
 window.onload = async function () {
     console.log("🚀 Valannia Inventory Tracker Loaded!");
     await loadValanniaTokens();
+    await loadTyxenRecipes();
     populateDropdownFilters();
     applySavedFilters();
     setupFilterPersistence();
@@ -868,6 +869,4 @@ document.addEventListener("DOMContentLoaded", () => {
         refreshButton.addEventListener("click", refreshBalances);
     }
 });
-
-
 
