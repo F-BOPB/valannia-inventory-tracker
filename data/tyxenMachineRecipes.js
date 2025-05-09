@@ -96,6 +96,39 @@ async function loadTyxenRecipes() {
     ]
   },
 
+
+
+  {
+    name: "Ice Velgrun",
+    result: { type: "core_nft", mint: getMint("Ice Velgrun") },
+    ingredients: [
+      { type: "spl_token", mint: getMint("Softwood Handle"), quantity: 1 },
+      { type: "spl_token", mint: getMint("Copper Ingot"), quantity: 1 },
+      { type: "spl_token", mint: getMint("Paper"), quantity: 3 },
+    ]
+  },
+    
+  {
+    name: "Dragon Eye Medallion",
+    result: { type: "core_nft", mint: getMint("Dragon Eye Medallion") },
+    ingredients: [
+      { type: "spl_token", mint: getMint("Dragon Breath"), quantity: 5 },
+      { type: "spl_token", mint: getMint("Processed Dragon Breath"), quantity: 3 },
+      { type: "spl_token", mint: getMint("Liquid Dragon Breath"), quantity: 1 },
+      { type: "spl_token", mint: getMint("Astralite"), quantity: 3 }
+    ]
+  },
+    
+  {
+    name: "Leviathan",
+    result: { type: "core_nft", mint: getMint("Leviathan") },
+    ingredients: [
+      { type: "spl_token", mint: getMint("Iron Ingot"), quantity: 1 },
+      { type: "spl_token", mint: getMint("Canvas Paper"), quantity: 1 },
+      { type: "spl_token", mint: getMint("Glass"), quantity: 1 },
+    ]
+  },
+    
   {
     name: "Griffin",
     result: { type: "spl_token", mint: getMint("Griffin") },
@@ -150,36 +183,6 @@ async function loadTyxenRecipes() {
       { type: "spl_token", mint: getMint("Processed Celespar"), quantity: 30 },
       { type: "spl_token", mint: getMint("Extraction Pipe"), quantity: 50 },
       { type: "spl_token", mint: getMint("Iron Hoop"), quantity: 50 }
-    ]
-  },
-
-  {
-      name: "Red Dragon",
-      result: { type: "spl_token", mint: getMint("Red Dragon") },
-      ingredients: [
-        { type: "spl_token", mint: getMint("Tyxen Toolkit"), quantity: 100 },
-        { type: "spl_token", mint: getMint("Processed Valannite"), quantity: 50 },
-        { type: "spl_token", mint: getMint("Processed Honey Drop"), quantity: 40 },
-        { type: "spl_token", mint: getMint("Processed Dragon Breath"), quantity: 30 },
-        { type: "spl_token", mint: getMint("Processed Celespar"), quantity: 30 },
-        { type: "spl_token", mint: getMint("Extraction Pipe"), quantity: 50 },
-        { type: "spl_token", mint: getMint("Liquid Celespar"), quantity: 50 },
-        { type: "spl_token", mint: getMint("Infused Iron Ingot"), quantity: 100 },
-      ]
-    },
-
-    {
-    name: "Nightmare",
-    result: { type: "spl_token", mint: getMint("Nightmare") },
-    ingredients: [
-      { type: "spl_token", mint: getMint("Tyxen Toolkit"), quantity: 100 },
-      { type: "spl_token", mint: getMint("Processed Valannite"), quantity: 50 },
-      { type: "spl_token", mint: getMint("Processed Honey Drop"), quantity: 40 },
-      { type: "spl_token", mint: getMint("Processed Dragon Breath"), quantity: 30 },
-      { type: "spl_token", mint: getMint("Processed Celespar"), quantity: 30 },
-      { type: "spl_token", mint: getMint("Extraction Pipe"), quantity: 50 },
-      { type: "spl_token", mint: getMint("Canvas Paper"), quantity: 100 },
-      { type: "spl_token", mint: getMint("Boots"), quantity: 75 }
     ]
   },
 
