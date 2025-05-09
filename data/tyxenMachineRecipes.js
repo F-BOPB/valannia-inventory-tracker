@@ -99,7 +99,7 @@ async function loadTyxenRecipes() {
 
 
   {
-    name: "Ice Velgrun",
+    name: "Badge: Ice Velgrun",
     result: { type: "core_nft", mint: getMint("Ice Velgrun") },
     ingredients: [
       { type: "spl_token", mint: getMint("Softwood Handle"), quantity: 1 },
@@ -109,28 +109,28 @@ async function loadTyxenRecipes() {
   },
     
   {
-    name: "Dragon Eye Medallion",
-    result: { type: "core_nft", mint: getMint("Dragon Eye Medallion") },
-    ingredients: [
-      { type: "spl_token", mint: getMint("Dragon Breath"), quantity: 5 },
-      { type: "spl_token", mint: getMint("Processed Dragon Breath"), quantity: 3 },
-      { type: "spl_token", mint: getMint("Liquid Dragon Breath"), quantity: 1 },
-      { type: "spl_token", mint: getMint("Astralite"), quantity: 3 }
-    ]
-  },
-    
-  {
-    name: "Leviathan",
+    name: "Badge: Leviathan",
     result: { type: "core_nft", mint: getMint("Leviathan") },
     ingredients: [
+      { type: "spl_token", mint: getMint("Hardwood Handle"), quantity: 1 },
       { type: "spl_token", mint: getMint("Iron Ingot"), quantity: 1 },
       { type: "spl_token", mint: getMint("Canvas Paper"), quantity: 1 },
-      { type: "spl_token", mint: getMint("Glass"), quantity: 1 },
+      { type: "spl_token", mint: getMint("Glass"), quantity: 1 }
     ]
   },
     
   {
-    name: "Griffin",
+    name: "Badge: Fire Dragon",
+    result: { type: "core_nft", mint: getMint("Fire Dragon") },
+    ingredients: [
+      { type: "spl_token", mint: getMint("Plumhide Handle"), quantity: 1 },
+      { type: "spl_token", mint: getMint("Quicksilver Ingot"), quantity: 1 },
+      { type: "spl_token", mint: getMint("Hideleaf"), quantity: 1 },
+    ]
+  },
+    
+  {
+    name: "CU: Griffin",
     result: { type: "spl_token", mint: getMint("Griffin") },
     ingredients: [
       { type: "spl_token", mint: getMint("Tyxen Toolkit"), quantity: 170 },
@@ -145,7 +145,7 @@ async function loadTyxenRecipes() {
   },
   
   {
-    name: "Forest Sprouter",
+    name: "CU: Forest Sprouter",
     result: { type: "spl_token", mint: getMint("Forest Sprouter") },
     ingredients: [
       { type: "spl_token", mint: getMint("Tyxen Toolkit"), quantity: 100 },
@@ -158,7 +158,7 @@ async function loadTyxenRecipes() {
   },
 
   {
-    name: "Abomination",
+    name: "CU: Abomination",
     result: { type: "spl_token", mint: getMint("Abomination") },
     ingredients: [
       { type: "spl_token", mint: getMint("Tyxen Toolkit"), quantity: 150 },
@@ -173,7 +173,7 @@ async function loadTyxenRecipes() {
   },
 
   {
-    name: "Battering Ram",
+    name: "CU: Battering Ram",
     result: { type: "spl_token", mint: getMint("Battering Ram") },
     ingredients: [
       { type: "spl_token", mint: getMint("Tyxen Toolkit"), quantity: 200 },
@@ -187,7 +187,7 @@ async function loadTyxenRecipes() {
   },
 
   {
-    name: "Tyxen Tank",
+    name: "CU: Tyxen Tank",
     result: { type: "spl_token", mint: getMint("Tyxen Tank") },
     ingredients: [
       { type: "spl_token", mint: getMint("Tyxen Toolkit"), quantity: 200 },
@@ -201,7 +201,7 @@ async function loadTyxenRecipes() {
   },
 
   {
-    name: "Zim",
+    name: "CU: Zim",
     result: { type: "spl_token", mint: getMint("Zim") },
     ingredients: [
       { type: "spl_token", mint: getMint("Tyxen Toolkit"), quantity: 100 },
