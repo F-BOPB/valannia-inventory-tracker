@@ -1,7 +1,14 @@
 const SOLANA_RPC_URL = "https://solana-mainnet.g.alchemy.com/v2/etYPr5YIk-NByShZmO7l0Pna6SnOtNwt";
 
-let trackedWallets = JSON.parse(localStorage.getItem("trackedWallets")) || [];// Initialize trackedWallets from localStorage or as an empty array
+let walletGroups = JSON.parse(localStorage.getItem("walletGroups")) || {
+    "group-1": {
+        name: "Default",
+        wallets: []
+    }
+};
+let activeWalletGroup = localStorage.getItem("activeWalletGroup") || "group-1";
 let valanniaTokens = [];// Global variable to store Valannia tokens
+let isEditMode = false;
 
 // Function to load valanniaTokens.json
 async function loadValanniaTokens() {
@@ -60,7 +67,6 @@ function populateDropdownFilters() {
     
 }
 
-
 function setupFilterPersistence() {
     const categoryFilter = document.getElementById("categoryFilter");
     const tierFilter = document.getElementById("tierFilter");
@@ -103,7 +109,6 @@ function setupFilterPersistence() {
         });
     }
 }
-
 
 function applySavedFilters() {
     const savedCategory = localStorage.getItem("selectedCategory");
@@ -150,6 +155,7 @@ async function refreshInventory() {
 // Run this function when the page loads
 window.onload = async function () {
     console.log("🚀 Valannia Inventory Tracker Loaded!");
+    renderWalletGroupTabs();
     await loadValanniaTokens();
     await loadTyxenRecipes();
     populateDropdownFilters();
@@ -166,6 +172,22 @@ window.onload = async function () {
 
     filterTable(); // 🚨 After full table is built, apply user-selected filters (hide/show rows)
 };
+
+// ✅ Hook up the Edit button after the DOM is ready
+document.getElementById("toggleEditModeBtn").onclick = () => {
+    isEditMode = !isEditMode;
+
+    const toggleBtn = document.getElementById("toggleEditModeBtn");
+    const hint = document.getElementById("editModeHint");
+
+    toggleBtn.textContent = isEditMode ? "done √" : "edit";
+    toggleBtn.setAttribute("aria-pressed", isEditMode.toString());
+    hint.classList.toggle("hidden", !isEditMode); // Show/hide the hint
+
+
+    renderWalletGroupTabs(); // Re-render tabs with delete buttons if needed
+};
+
 
 //////////////////////////////// Favorit Toggle and storage  ///////////////////////
 function getFavoriteTokens() {
@@ -242,12 +264,14 @@ async function getSolBalance(walletAddress) {
 async function fetchAllSolBalances() {
     let balances = {}; // Create an object to store balances
 
+    const trackedWallets = walletGroups[activeWalletGroup]?.wallets || [];
+
     for (let wallet of trackedWallets) {
         let solBalance = await getSolBalance(wallet); // Fetch balance
         balances[wallet] = solBalance !== null ? solBalance : "⚠️ Error"; // Store result
     }
 
-        return balances; // Return the balance object
+    return balances; // Return the balance object
 }
 
 // ✅ Fetch SPL Token Balances for a Specific Wallet
@@ -302,6 +326,7 @@ function filterValanniaTokens(allBalances) {
         if (tokenData) {
             // Ensure that the balances for each wallet exist, even if 0
             let walletBalances = {};
+            const trackedWallets = walletGroups[activeWalletGroup]?.wallets || [];
             for (const wallet of trackedWallets) {
                 walletBalances[wallet] = allBalances[mintAddress].balances[wallet];
             }
@@ -323,6 +348,7 @@ function filterValanniaTokens(allBalances) {
         const mint = token.mint;
         if (!filtered[mint]) {
             const zeroBalances = {};
+            const trackedWallets = walletGroups[activeWalletGroup]?.wallets || [];
             for (const wallet of trackedWallets) {
                 zeroBalances[wallet] = { balance: 0, accountExists: false };
 
@@ -346,6 +372,8 @@ function filterValanniaTokens(allBalances) {
 async function fetchAllSplBalances() {
     let allBalances = {}; 
 
+    const trackedWallets = walletGroups[activeWalletGroup]?.wallets || [];
+
     for (const wallet of trackedWallets) {  
         let walletBalances = await getSplBalances(wallet);
 
@@ -353,91 +381,240 @@ async function fetchAllSplBalances() {
             if (!allBalances[mintAddress]) {
                 allBalances[mintAddress] = { balances: {} };
             }
-            // ✅ Store actual balance
             allBalances[mintAddress].balances[wallet] = walletBalances[mintAddress] || 0;
         }
     }
 
-    // ✅ Ensure every token has an entry for all wallets, even if they hold 0
+    // Ensure every token has an entry for all wallets, even if they hold 0
     for (const mintAddress in allBalances) {
         for (const wallet of trackedWallets) {
             if (allBalances[mintAddress].balances[wallet] === undefined) {
                 allBalances[mintAddress].balances[wallet] = { balance: 0, accountExists: false };
             } else {
-                allBalances[mintAddress].balances[wallet] = { balance: allBalances[mintAddress].balances[wallet], accountExists: true };
+                allBalances[mintAddress].balances[wallet] = {
+                    balance: allBalances[mintAddress].balances[wallet],
+                    accountExists: true
+                };
             }
         }
     }
-      
-    let filteredBalances = filterValanniaTokens(allBalances); // ✅ Apply filtering mechanism (only show Valannia tokens)
-     
-    return filteredBalances; // ✅ Return the filteredBalances
+
+    let filteredBalances = filterValanniaTokens(allBalances);     
+    return filteredBalances;
 }
 
 // ✅ Function to load wallets from localStorage when the page loads
 function loadWallets() {
-    let storedWallets = localStorage.getItem("trackedWallets"); // Get saved wallets
-    trackedWallets = storedWallets ? JSON.parse(storedWallets) : []; // Convert to an array
+    // Get wallets from the currently active group
+    const group = walletGroups[activeWalletGroup];
+    const trackedWallets = group ? group.wallets : [];
 
-    if (!Array.isArray(trackedWallets)) {
-        trackedWallets = []; // ✅ Ensure it's an array
+    displayWallets(trackedWallets);
+
+    // Disable Add Wallet button if 10 wallets are already added
+    const addWalletBtn = document.getElementById("addWalletBtn");
+    if (trackedWallets.length >= 10) {
+        addWalletBtn.disabled = true;
+        addWalletBtn.classList.add("opacity-50", "cursor-not-allowed");
+    } else {
+        addWalletBtn.disabled = false;
+        addWalletBtn.classList.remove("opacity-50", "cursor-not-allowed");
     }
-
-    displayWallets(); // ✅ Update the UI with loaded wallets
-        // ✅ Disable Add Wallet button if 10 wallets are already added
-        let addWalletBtn = document.getElementById("addWalletBtn");
-        if (trackedWallets.length >= 10) {
-            addWalletBtn.disabled = true;
-            addWalletBtn.classList.add("opacity-50", "cursor-not-allowed");
-        }
-    
 }
 
 //////////////////////////////// TRACKED WALLET  ///////////////////////
+function renderWalletGroupTabs() {
+    const container = document.getElementById("walletGroupTabs");
+    container.innerHTML = "";
+
+    const groupIds = Object.keys(walletGroups);
+
+    groupIds.forEach((groupId, index) => {
+        const group = walletGroups[groupId];
+        const isActive = groupId === activeWalletGroup;
+
+        const tabWrapper = document.createElement("div");
+        tabWrapper.className = `inline-block ${
+            index !== 0 ? "border-l-4 border-gray-700 ml-2 pl-4" : ""
+        }`;
+
+        const tab = document.createElement("div");
+        tab.className = `text-sm pb-1 border-b-2 cursor-pointer inline-flex items-center gap-2 ${
+            isActive
+                ? "border-blue-500 text-blue-400 font-semibold"
+                : "border-transparent text-gray-400 hover:text-blue-300"
+        }`;
+
+        const nameSpan = document.createElement("span");
+        nameSpan.textContent = group.name || groupId;
+        nameSpan.className = "cursor-pointer";
+
+        let isEditing = false;
+
+        nameSpan.ondblclick = (e) => {
+            e.stopPropagation(); // prevent tab click while editing
+            if (isEditing) return;
+            isEditing = true;
+
+            const input = document.createElement("input");
+            input.type = "text";
+            input.value = group.name || groupId;
+            input.className = "text-sm bg-gray-900 text-white px-1 rounded w-32";
+
+            const confirmBtn = document.createElement("button");
+            confirmBtn.textContent = "✔️";
+            confirmBtn.className = "ml-1 text-green-400 hover:text-green-300 text-xs align-top";
+
+            confirmBtn.onclick = (e) => {
+                e.stopPropagation();
+                const newName = input.value.trim();
+                if (newName) {
+                    walletGroups[groupId].name = newName;
+                    localStorage.setItem("walletGroups", JSON.stringify(walletGroups));
+                }
+                renderWalletGroupTabs(); // Exit edit mode
+            };
+
+            nameSpan.replaceWith(input);
+            input.after(confirmBtn);
+            input.focus();
+        };
+
+        tab.onclick = () => {
+            if (isEditMode) return; // Don't activate group in edit mode
+            activeWalletGroup = groupId;
+            localStorage.setItem("activeWalletGroup", groupId);
+            renderWalletGroupTabs();
+            loadWallets();
+            refreshInventory();
+        };
+
+        tab.appendChild(nameSpan);
+
+        // 🧨 Show delete icon when editing and it's not the active group
+        if (isEditMode) {
+            const deleteBtn = document.createElement("button");
+            deleteBtn.textContent = "❌";
+            deleteBtn.className = "ml-2 text-red-400 hover:text-red-300 text-xs align-top";
+            deleteBtn.title = `Delete "${group.name}"`;
+        
+            deleteBtn.onclick = (e) => {
+                e.stopPropagation(); // prevent tab selection
+        
+                const confirmed = confirm(`Are you sure you want to delete group "${group.name}"?`);
+                if (!confirmed) return;
+        
+                delete walletGroups[groupId];
+        
+                // Fallback to another group
+                const remaining = Object.keys(walletGroups);
+                activeWalletGroup = remaining.length > 0 ? remaining[0] : null;
+        
+                localStorage.setItem("walletGroups", JSON.stringify(walletGroups));
+                localStorage.setItem("activeWalletGroup", activeWalletGroup || "");
+        
+                renderWalletGroupTabs();
+                loadWallets();
+                refreshInventory();
+            };
+        
+            tab.appendChild(deleteBtn);
+        }
+        
+
+        tabWrapper.appendChild(tab);
+        container.appendChild(tabWrapper);
+    });
+
+    // ➕ New Group tab
+    const createWrapper = document.createElement("div");
+    createWrapper.className = "inline-block border-l-4 border-gray-700 ml-2 pl-4";
+
+    const createBtn = document.createElement("button");
+    createBtn.textContent = "➕ New Group";
+    createBtn.className =
+        "text-sm pb-1 border-b-2 border-transparent text-gray-400 hover:text-yellow-300";
+
+    createBtn.onclick = () => {
+        const name = prompt("Enter a name for the new group:");
+        if (!name) return;
+
+        const newId = `group-${Date.now()}`;
+        walletGroups[newId] = {
+            name: name.trim(),
+            wallets: []
+        };
+
+        activeWalletGroup = newId;
+        localStorage.setItem("walletGroups", JSON.stringify(walletGroups));
+        localStorage.setItem("activeWalletGroup", newId);
+
+        renderWalletGroupTabs();
+        loadWallets();
+        refreshInventory();
+    };
+
+    createWrapper.appendChild(createBtn);
+    container.appendChild(createWrapper);
+}
+
+
+
 // ✅ Function to add new wallets
 async function addWallet() {
-    let walletInput = document.getElementById("walletInput"); // Get input field
-    let walletAddress = walletInput.value.trim(); // Get entered address and remove extra spaces
-    let addWalletBtn = document.getElementById("addWalletBtn"); // Get Add Wallet button
-// Condition:
-    if (!walletAddress) {alert("⚠️ Please enter a wallet address!"); return;}
-    if (!/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(walletAddress)) {alert("❌ Invalid Solana wallet address!"); return;}
+    const walletInput = document.getElementById("walletInput");
+    const walletAddress = walletInput.value.trim();
+    const addWalletBtn = document.getElementById("addWalletBtn");
 
-     // Show loading message while adding wallet
-     document.getElementById("loadingMessage").classList.remove("hidden");
+    if (!walletAddress) {
+        alert("⚠️ Please enter a wallet address!");
+        return;
+    }
 
-    // ✅ Ensure we have an up-to-date array of wallets
-    let wallets = JSON.parse(localStorage.getItem("trackedWallets")) || [];
+    if (!/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(walletAddress)) {
+        alert("❌ Invalid Solana wallet address!");
+        return;
+    }
 
-    if (wallets.length >= 10) {return;}// Do nothing if 10 wallets are already added
+    document.getElementById("loadingMessage").classList.remove("hidden");
+
+    // 🧠 Get current group's wallet list
+    const group = walletGroups[activeWalletGroup];
+    if (!group) {
+        alert("⚠️ Invalid wallet group.");
+        return;
+    }
+
+    const wallets = group.wallets;
+
+    if (wallets.length >= 10) return; // max limit
 
     if (!wallets.includes(walletAddress)) {
-        wallets.push(walletAddress); // ✅ Add to the array
-        localStorage.setItem("trackedWallets", JSON.stringify(wallets)); // ✅ Save to localStorage  
-        trackedWallets = wallets; // ✅ Update the global `trackedWallets` array
-        displayWallets(); // ✅ Update UI immediately
-        
-        // ✅ After adding the wallet, fetch all SPL balances again to update the table
-        await fetchAllSplBalances(); // Fetch new balances for all wallets
-        const filteredBalances = await fetchAllSplBalances(); // Ensure the balances are freshly updated
-        displayFilteredTokenBalances(filteredBalances); // Update table with all wallets' balances
+        wallets.push(walletAddress); // Add to group
+        walletGroups[activeWalletGroup].wallets = wallets; // Update in memory
+        localStorage.setItem("walletGroups", JSON.stringify(walletGroups)); // Save to storage
+
+        displayWallets(wallets);
+
+        const filteredBalances = await fetchAllSplBalances();
+        displayFilteredTokenBalances(filteredBalances);
     } else {
-        alert(`⚠️ Wallet ${walletAddress} is already being tracked!`);
+        alert(`⚠️ Wallet ${walletAddress} is already being tracked in this tab!`);
     }
 
-    walletInput.value = ""; // ✅ Clear input field
+    walletInput.value = "";
 
-    // ✅ Disable Add Wallet button if limit is reached
     if (wallets.length >= 10) {
         addWalletBtn.disabled = true;
-        addWalletBtn.classList.add("opacity-50", "cursor-not-allowed"); // Add styling for disabled button
+        addWalletBtn.classList.add("opacity-50", "cursor-not-allowed");
     }
-     // Hide loading message after the operation
-     document.getElementById("loadingMessage").classList.add("hidden");
+
+    document.getElementById("loadingMessage").classList.add("hidden");
 }
 
 // ✅ Function to display wallets in the Tracked Wallet Section (address & remove button)
-function displayWallets() {
+function displayWallets(trackedWallets) {
+
     let walletList = document.getElementById("wallets");  // Get the <ul> where wallets are displayed
     walletList.innerHTML = ""; // Clear the list to avoid duplicates
 
@@ -451,7 +628,7 @@ function displayWallets() {
 
         // ✅ Create a Remove button
         let removeButton = document.createElement("button");
-        removeButton.textContent = "❌ Remove";
+        removeButton.textContent = "❌";
         removeButton.style.fontSize = "0.7rem";
         removeButton.className = "ml-2 text-red-500"; // Small red button
         removeButton.onclick = function () { removeWallet(wallet); };
@@ -465,29 +642,31 @@ function displayWallets() {
 
 // ✅ Function to remove a wallet
 function removeWallet(walletAddress) {
-    // Show loading message while removing wallet
     document.getElementById("loadingMessage").classList.remove("hidden");
 
-    // Remove the wallet from the trackedWallets array
-    trackedWallets = trackedWallets.filter(wallet => wallet !== walletAddress);
-    localStorage.setItem("trackedWallets", JSON.stringify(trackedWallets)); // Save updated list to localStorage
-    displayWallets(); // Update the UI
+    const group = walletGroups[activeWalletGroup];
+    if (!group) return;
 
-    // Fetch updated balances after removing a wallet
+    // Remove wallet from the current group's list
+    group.wallets = group.wallets.filter(wallet => wallet !== walletAddress);
+    localStorage.setItem("walletGroups", JSON.stringify(walletGroups)); // Save updated groups
+
+    displayWallets(group.wallets); // Update the list visually
+
     fetchAllSolBalances().then(async () => {
-        const filteredBalances = await fetchAllSplBalances(); // Fetch SPL balances again after removing the wallet
-        displayFilteredTokenBalances(filteredBalances); // Update the table with the new filtered balances
+        const filteredBalances = await fetchAllSplBalances();
+        displayFilteredTokenBalances(filteredBalances);
     });
 
-    // Enable Add Wallet button if the wallet count is below 10
-    let addWalletBtn = document.getElementById("addWalletBtn");
-    if (trackedWallets.length < 10) {
+    const addWalletBtn = document.getElementById("addWalletBtn");
+    if (group.wallets.length < 10) {
         addWalletBtn.disabled = false;
         addWalletBtn.classList.remove("opacity-50", "cursor-not-allowed");
     }
-    // Hide loading message after the operation
+
     document.getElementById("loadingMessage").classList.add("hidden");
 }
+
 
 ///////////////////////////////// DYNAMIC TABLE /////////////////////////
 // Function to shorten wallet address to the first 4 and last 4 characters
