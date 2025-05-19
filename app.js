@@ -180,14 +180,13 @@ document.getElementById("toggleEditModeBtn").onclick = () => {
     const toggleBtn = document.getElementById("toggleEditModeBtn");
     const hint = document.getElementById("editModeHint");
 
-    toggleBtn.textContent = isEditMode ? "done √" : "edit";
+    toggleBtn.textContent = isEditMode ? "done" : "edit";
     toggleBtn.setAttribute("aria-pressed", isEditMode.toString());
     hint.classList.toggle("hidden", !isEditMode); // Show/hide the hint
 
 
     renderWalletGroupTabs(); // Re-render tabs with delete buttons if needed
 };
-
 
 //////////////////////////////// Favorit Toggle and storage  ///////////////////////
 function getFavoriteTokens() {
@@ -559,7 +558,6 @@ function renderWalletGroupTabs() {
 }
 
 
-
 // ✅ Function to add new wallets
 async function addWallet() {
     const walletInput = document.getElementById("walletInput");
@@ -614,34 +612,69 @@ async function addWallet() {
 
 // ✅ Function to display wallets in the Tracked Wallet Section (address & remove button)
 function displayWallets(trackedWallets) {
+    const walletNames = JSON.parse(localStorage.getItem("walletNames") || "{}");
+    const walletList = document.getElementById("wallets");
+    walletList.innerHTML = "";
 
-    let walletList = document.getElementById("wallets");  // Get the <ul> where wallets are displayed
-    walletList.innerHTML = ""; // Clear the list to avoid duplicates
+    trackedWallets.forEach(wallet => {
+        const listItem = document.createElement("li");
+        listItem.className = "flex items-center justify-between text-sm text-white";
+        listItem.setAttribute("style", "padding: 0; margin: 0; line-height: 1.5;");
 
-    for (let wallet of trackedWallets) {
-        let listItem = document.createElement("li"); // Create a new list item <li>
-        listItem.style.fontSize = "0.875rem"; // Smaller font size (14px)
 
-        // ✅ Create a span for the wallet address
-        let walletSpan = document.createElement("span");
-        walletSpan.textContent = wallet;
+        // Left side: Name + Address
+        const nameContainer = document.createElement("span");
 
-        // ✅ Create a Remove button
-        let removeButton = document.createElement("button");
-        removeButton.textContent = "❌";
-        removeButton.style.fontSize = "0.7rem";
-        removeButton.className = "ml-2 text-red-500"; // Small red button
-        removeButton.onclick = function () { removeWallet(wallet); };
+        const displayName = walletNames[wallet] || "";
+        if (displayName) {
+            nameContainer.innerHTML = `<span class="font-medium">${displayName}</span><span class="italic text-gray-400 text-xs ml-1">:  ${wallet}</span>`;
 
-        // ✅ Append elements
-        listItem.appendChild(walletSpan);
-        listItem.appendChild(removeButton);
+        } else {
+            nameContainer.textContent = wallet;
+        }
+
+        // Right side: ✏️ ❌ buttons
+        const buttonContainer = document.createElement("span");
+
+        // ✏️ Rename Button
+        const renameBtn = document.createElement("button");
+        renameBtn.textContent = "✏️";
+        renameBtn.title = "Rename Wallet";
+        renameBtn.className = "text-xs text-yellow-300 hover:text-yellow-200 ml-2";
+        renameBtn.onclick = () => {
+            const newName = prompt("Enter a name for this wallet:", walletNames[wallet] || "");
+            if (newName !== null) {
+                if (newName.trim()) {
+                    walletNames[wallet] = newName.trim();
+                } else {
+                    delete walletNames[wallet]; // Clear name
+                }
+                localStorage.setItem("walletNames", JSON.stringify(walletNames));
+                displayWallets(trackedWallets);
+            }
+        };
+
+        // ❌ Remove Button
+        const removeBtn = document.createElement("button");
+        removeBtn.textContent = "❌";
+        removeBtn.title = "Remove Wallet";
+        removeBtn.className = "text-xs text-red-400 hover:text-red-300 ml-2";
+        removeBtn.onclick = () => removeWallet(wallet);
+
+        buttonContainer.appendChild(renameBtn);
+        buttonContainer.appendChild(removeBtn);
+
+        listItem.appendChild(nameContainer);
+        listItem.appendChild(buttonContainer);
         walletList.appendChild(listItem);
-    }
+    });
 }
+
+
 
 // ✅ Function to remove a wallet
 function removeWallet(walletAddress) {
+
     document.getElementById("loadingMessage").classList.remove("hidden");
 
     const group = walletGroups[activeWalletGroup];
@@ -677,200 +710,129 @@ function shortenAddress(address) {
 
 // Table
 async function displayFilteredTokenBalances(filteredBalances) {
-    let inventoryTable = document.getElementById("inventoryTable"); // ✅ Get the table body
+    const inventoryTable = document.getElementById("inventoryTable");
     const favoriteTokens = getFavoriteTokens();
+    const walletNames = JSON.parse(localStorage.getItem("walletNames") || "{}");
 
-    inventoryTable.innerHTML = ""; // ✅ Clear clears any existing rows in the table before adding new ones.
+    inventoryTable.innerHTML = ""; // Clear previous table rows
 
-    // Check if filteredBalances is empty or undefined
     if (!filteredBalances || Object.keys(filteredBalances).length === 0) {
-        let noDataRow = document.createElement("tr");
-        let noDataCell = document.createElement("td");
-        noDataCell.colSpan = 5; // Span across all columns
-        noDataCell.textContent = "No Valannia tokens found.";
-        noDataRow.appendChild(noDataCell);
-        inventoryTable.appendChild(noDataRow);
-        return; // Exit the function early if no tokens
-    }
-
-    // Get the list of wallets dynamically from the first token
-    const wallets = Object.keys(filteredBalances[Object.keys(filteredBalances)[0]].balances);
-
-    // Ensure we have a valid list of wallets to display
-    if (wallets.length === 0) {
-        let noWalletsRow = document.createElement("tr");
-        let noWalletsCell = document.createElement("td");
-        noWalletsCell.colSpan = 5; // Span across all columns
-        noWalletsCell.textContent = "No wallets found.";
-        noWalletsRow.appendChild(noWalletsCell);
-        inventoryTable.appendChild(noWalletsRow);
+        inventoryTable.innerHTML = `<tr><td colspan="5">No Valannia tokens found.</td></tr>`;
         return;
     }
 
-    // Create the header row with wallet addresses as columns
-    let headerRow = document.createElement("tr");
-    headerRow.className = "bg-[#141d2f] border-b border-gray-700"; // Styling for header row
-
-    // Create a placeholder column for token names
-    let nameHeaderCell = document.createElement("th");
-    nameHeaderCell.className = "p-2 text-center";
-    nameHeaderCell.textContent = "Items"; // Column for token names
-    headerRow.appendChild(nameHeaderCell);
-
-    // Create the "Total" header column
-    let totalHeaderCell = document.createElement("th");
-    totalHeaderCell.className = "p-2 text-center";
-    totalHeaderCell.textContent = "Total"; // Column for total quantity
-    headerRow.appendChild(totalHeaderCell);
-
-    // Create wallet header columns
-    for (const wallet of wallets) {
-        let shortenedWalletAddress = shortenAddress(wallet);  // Shorten the wallet address
-        let walletHeaderCell = document.createElement("th");
-        walletHeaderCell.className = "p-2 text-center";
-        walletHeaderCell.textContent = shortenedWalletAddress; // Set shortened address in header
-        headerRow.appendChild(walletHeaderCell);
+    const wallets = Object.keys(filteredBalances[Object.keys(filteredBalances)[0]].balances);
+    if (wallets.length === 0) {
+        inventoryTable.innerHTML = `<tr><td colspan="5">No wallets found.</td></tr>`;
+        return;
     }
 
-    // Append the header row to the table
+    // === Build Table Header ===
+    const headerRow = document.createElement("tr");
+    headerRow.className = "bg-[#141d2f] border-b border-gray-700";
+
+    headerRow.innerHTML = `
+        <th class="p-2 text-center">Items</th>
+        <th class="p-2 text-center">Total</th>
+    `;
+
+    wallets.forEach(wallet => {
+        const name = walletNames[wallet];
+        const headerCell = document.createElement("th");
+        headerCell.className = "p-2 text-center";
+        headerCell.textContent = name || shortenAddress(wallet);
+        if (name) headerCell.title = wallet;
+        headerRow.appendChild(headerCell);
+    });
+
     inventoryTable.appendChild(headerRow);
 
-    let headers = inventoryTable.rows[0].cells;
-    for (let i = 0; i < headers.length; i++) {
-    headers[i].addEventListener("click", function () {
-        let isNumeric = i !== 0; // ✅ Items column is text, others are numbers
-        sortTable(i, isNumeric);
-    });
-    }
-
-    // ✅ Create the SOL balance row at the top
-    let solRow = document.createElement("tr");
+    // === Build SOL Row ===
+    const solRow = document.createElement("tr");
     solRow.className = "bg-gray-800 border-b border-gray-700";
-    
-    let solLabelCell = document.createElement("td");
-    solLabelCell.className = "p-1 text-center";
-    solLabelCell.textContent = "SOL Balance"; // Label for the SOL row
-    solRow.appendChild(solLabelCell);
+    solRow.innerHTML = `<td class="p-1 text-center">SOL Balance</td><td class="p-1 text-center"></td>`;
 
-    // Add "SOL" for each wallet column in the header
-    let totalSolCell = document.createElement("td");
-    totalSolCell.className = "p-1 text-center";
-    totalSolCell.textContent = ""; // Empty space for Total column in SOL row
-    solRow.appendChild(totalSolCell);
-
-    // Loop over wallets to fetch and display SOL balance in this row
     for (const wallet of wallets) {
-        let solBalance = await getSolBalance(wallet); // Fetch the SOL balance (assuming async function)
-        let solBalanceCell = document.createElement("td");
-        solBalanceCell.className = "p-1 text-center";
-        solBalanceCell.textContent = solBalance.toLocaleString(); // Display SOL balance
-        solRow.appendChild(solBalanceCell);
+        const cell = document.createElement("td");
+        cell.className = "p-1 text-center";
+        const balance = await getSolBalance(wallet);
+        cell.textContent = balance !== null ? balance : "⚠️";
+        solRow.appendChild(cell);
     }
 
-    // Append the SOL balance row to the table
     inventoryTable.appendChild(solRow);
 
-    // ✅ Read saved filters from LocalStorage
-    const savedCategory = localStorage.getItem("selectedCategory");
-    const savedTier = localStorage.getItem("selectedTier");
-    const savedProfession = localStorage.getItem("selectedProfession");
-    const savedRecipe = localStorage.getItem("selectedRecipe");
-    const savedFavoritesOnly = localStorage.getItem("favoritesOnly") === "true";
+    // === Read Active Filters ===
+    const filters = {
+        category: localStorage.getItem("selectedCategory"),
+        tier: localStorage.getItem("selectedTier"),
+        profession: localStorage.getItem("selectedProfession"),
+        recipe: localStorage.getItem("selectedRecipe"),
+        favoritesOnly: localStorage.getItem("favoritesOnly") === "true",
+    };
 
-    let allowedMintsForRecipe = [];
-    if (savedRecipe && typeof tyxenMachineRecipes !== "undefined") {
-        const activeRecipe = tyxenMachineRecipes.find(r => r.name === savedRecipe);
-        if (activeRecipe) {
-            allowedMintsForRecipe = [
-                activeRecipe.result.mint,
-                ...activeRecipe.ingredients.map(ingredient => ingredient.mint)
+    let allowedMints = [];
+    if (filters.recipe && typeof tyxenMachineRecipes !== "undefined") {
+        const recipe = tyxenMachineRecipes.find(r => r.name === filters.recipe);
+        if (recipe) {
+            allowedMints = [
+                recipe.result.mint,
+                ...recipe.ingredients.map(ing => ing.mint),
             ];
         }
     }
 
-    // Loop through each token in the filtered balances
-    for (const mintAddress in filteredBalances) {
-        let tokenData = filteredBalances[mintAddress]; // ✅ Get token data
-        const isFavorite = favoriteTokens.includes(mintAddress);
+    // === Build Token Rows ===
+    for (const mint in filteredBalances) {
+        const token = filteredBalances[mint];
+        const isFavorite = favoriteTokens.includes(mint);
 
+        // Apply filters
+        const matches = (
+            (!filters.category || token.category === filters.category) &&
+            (!filters.tier || token.tier === filters.tier) &&
+            (!filters.profession || token.profession === filters.profession) &&
+            (!filters.recipe || allowedMints.includes(mint)) &&
+            (!filters.favoritesOnly || isFavorite)
+        );
 
-        // ✅ Calculate total quantity across all wallets
-        let totalQuantity = Object.values(tokenData.balances).reduce((sum, balance) => {
-            if (typeof balance === "object" && balance !== null) {
-                return sum + (balance.balance || 0);
-            } else {
-                return sum + (balance || 0);
-            }
-        }, 0);
-        
+        if (!matches) continue;
 
-        // ✅ Create the row for each token
-        let row = document.createElement("tr");
-        row.dataset.category = tokenData.category || "";
-        row.dataset.tier = tokenData.tier || "";
-        row.dataset.profession = tokenData.profession || "";
-        row.dataset.favorite = isFavorite ? "true" : "false";
-
+        const row = document.createElement("tr");
         row.className = "bg-gray-800 border-b border-gray-700";
+        row.dataset = {
+            category: token.category,
+            tier: token.tier,
+            profession: token.profession,
+            favorite: isFavorite.toString()
+        };
 
-        // ✅ Create the first column: Token Name (with Solscan link and icon)
-        let nameCell = document.createElement("td");
-        nameCell.className = "p-1 flex items-center gap-2";
+        const icon = `<img src="${token.icon}" alt="${token.name}" class="w-6 h-6 rounded">`;
+        const star = `<button class="${isFavorite ? 'text-yellow-400' : 'text-gray-500'} text-lg hover:scale-110 transition" onclick="toggleFavorite('${mint}')">${isFavorite ? "★" : "☆"}</button>`;
+        const link = `<a href="https://solscan.io/token/${mint}" target="_blank" class="text-blue-400 hover:underline">${token.name}</a>`;
 
-        let icon = document.createElement("img"); // Token icon
-        icon.src = tokenData.icon;
-        icon.alt = tokenData.name;
-        icon.className = "w-6 h-6 rounded";
+        const total = Object.values(token.balances).reduce((sum, b) => sum + (b.balance || 0), 0);
 
-        // Favorite star button
-        let starBtn = document.createElement("button");
-        starBtn.textContent = isFavorite ? "★" : "☆";
-        starBtn.className = `${isFavorite ? "text-yellow-400" : "text-gray-500"} text-lg hover:scale-110 transition`;
+        row.innerHTML = `
+            <td class="p-1 flex items-center gap-2">${star}${icon}${link}</td>
+            <td class="p-1 text-center">${total.toLocaleString()}</td>
+        `;
 
-        starBtn.onclick = () => toggleFavorite(mintAddress);
+        wallets.forEach(wallet => {
+            const info = token.balances[wallet];
+            const cell = document.createElement("td");
+            cell.className = "p-1 text-center";
+            cell.textContent = info?.accountExists ? info.balance.toLocaleString() : "-";
+            row.appendChild(cell);
+        });
 
-        let link = document.createElement("a");
-        link.href = `https://solscan.io/token/${mintAddress}`;
-        link.target = "_blank";
-        link.className = "text-blue-400 hover:underline";
-        link.textContent = tokenData.name;
-
-        nameCell.appendChild(starBtn);
-        nameCell.appendChild(icon);
-        nameCell.appendChild(link);
-
-        row.appendChild(nameCell);
-
-        // ✅ Create the second column: Total Quantity
-        let totalCell = document.createElement("td");
-        totalCell.className = "p-1 text-center";
-        totalCell.textContent = totalQuantity.toLocaleString(); // Format for readability
-        row.appendChild(totalCell);
-            
-           // ✅ Create wallet balance columns dynamically for each wallet
-        for (const wallet of wallets) {
-            let walletCell = document.createElement("td");
-            walletCell.className = "p-1 text-center";
-
-            let balanceInfo = tokenData.balances[wallet];
-
-            if (!balanceInfo.accountExists) {
-                walletCell.textContent = "-";
-            } else {
-                walletCell.textContent = balanceInfo.balance.toLocaleString();
-            }
-
-            row.appendChild(walletCell);
-        }
-
-        // Append the row to the table
         inventoryTable.appendChild(row);
     }
 
-    // Reinitialize header sorting event listeners
     setupSorting();
-    filterTable()
+    filterTable();
 }
+
 
 // Searching Function
 function filterTable() {
