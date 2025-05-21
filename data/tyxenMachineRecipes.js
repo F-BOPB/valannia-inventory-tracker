@@ -216,5 +216,5 @@ async function loadTyxenRecipes() {
   }
 ];
 
-loadTyxenRecipes();
+
 }
