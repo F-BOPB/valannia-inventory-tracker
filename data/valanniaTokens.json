@@ -205,5 +205,7 @@
 {"name":"Trollmark Buckle","mint":"ADWtU5ZiwELMC47eysZuZviCQmpxUDbpmrtp6wdVQsW8","category":"Components","subcategory":"Special Components","profession":"Tyxen Machine","tier":"-","icon":"https://s3.eu-north-1.amazonaws.com/resources.valannia.net/images/components/special-components/trollmark-buckle-128.webp"},
 {"name":"Wind Phoenix","mint":"7VXiZmm4ckZGZB9t3jmRQzvesmLQXQGmAC6H9agv1Tfw","category":"Components","subcategory":"Special Components","profession":"Tyxen Machine","tier":"-","icon":"https://s3.eu-north-1.amazonaws.com/resources.valannia.net/images/components/special-components/wind-phoenix-128.webp"},
 {"name":"Winterfiend Thread","mint":"EopzsQymqMVL6HxkMNuDr1jRWP9FsoVtaTqAQsqMewMQ","category":"Components","subcategory":"Special Components","profession":"Tyxen Machine","tier":"-","icon":"https://s3.eu-north-1.amazonaws.com/resources.valannia.net/images/components/special-components/winterfiend-thread-128.webp"},
+{"name":"USDC","mint":"EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v","category":"Currency","subcategory":"-","profession":"-","tier":"-","icon":"$"},
+{"name":"VALAN","mint":"5cL3TVJ7p5ZKqyx16DXwpdcNx5u19vQtWujA9vYindi","category":"Currency","subcategory":"-","profession":"-","tier":"-","icon":"V"},
 {"name":"2025 Valannia Crafting Star","mint":"6VQ4rYux6S92jYC38dk2fBA7ek8cuxPs93MSupiTBRRh","category":"Components","subcategory":"Special Components","profession":"Adv/DG/Troll","tier":"","icon":"https://s3.eu-north-1.amazonaws.com/resources.valannia.net/images/components/special-components/2025-valannia-crafting-star-128.webp"}
 ]
